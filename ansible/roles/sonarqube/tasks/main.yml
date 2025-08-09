@@ -1,0 +1,83 @@
+---
+- name: Install Java and required packages
+  yum:
+    name:
+      - java-11-amazon-corretto
+      - wget
+      - unzip
+    state: present
+
+- name: Create SonarQube group
+  group:
+    name: "{{ sonarqube_group }}"
+    state: present
+
+
+- name: Create SonarQube user 
+  user:
+    name: sonar
+    home: /opt/sonarqube
+    shell: /bin/false
+    system: yes
+    state: present
+    create_home: yes
+    group: sonar
+  
+
+- name: Allow passwordless sudo for SonarQube user
+  copy:
+    dest: "/etc/sudoers.d/sonar"
+    content: "sonar ALL=(ALL) NOPASSWD: ALL"
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+
+- name: Download SonarQube
+  get_url:
+    url: "{{ sonarqube_download_url }}"
+    dest: "/opt/{{ sonarqube_archive }}"
+    mode: '0644'
+
+- name: Unzip SonarQube
+  unarchive:
+    src: "/opt/{{ sonarqube_archive }}"
+    dest: /opt
+    remote_src: yes
+
+- name: Remove old SonarQube directory if exists
+  file:
+    path: "{{ sonarqube_home }}"
+    state: absent
+
+- name: Move extracted SonarQube directory
+  command: mv /opt/sonarqube-{{ sonarqube_version }} {{ sonarqube_home }}
+
+- name: Set ownership for SonarQube
+  file:
+    path: "{{ sonarqube_home }}"
+    state: directory
+    recurse: yes
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+
+- name: Make sonar.sh executable
+  file:
+    path: "{{ sonarqube_home }}/bin/linux-x86-64/sonar.sh"
+    mode: '0755'
+
+- name: Create systemd service for SonarQube
+  template:
+    src: sonarqube.service.j2
+    dest: /etc/systemd/system/sonarqube.service
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start SonarQube service
+  systemd:
+    name: sonarqube
+    enabled: yes
+    state: started
+

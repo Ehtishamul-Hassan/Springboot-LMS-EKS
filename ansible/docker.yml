@@ -1,0 +1,5 @@
+- name: Install and Configure SonarQube
+  hosts: tag_docker
+  become: true
+  roles:
+    - docker

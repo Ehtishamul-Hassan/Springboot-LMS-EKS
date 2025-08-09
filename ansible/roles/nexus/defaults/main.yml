@@ -1,0 +1,11 @@
+nexus_version: "3.79.0-09"
+nexus_user: nexus
+nexus_group: nexus
+nexus_install_dir: /opt/nexus
+nexus_work_dir: /opt/sonatype-work
+nexus_tarball_url: "https://download.sonatype.com/nexus/3/nexus-unix-x86-64-{{ nexus_version }}.tar.gz"
+nexus_tarball_dest: "/tmp/nexus-{{ nexus_version }}.tar.gz"
+java_package: java-21-amazon-corretto
+swap_file: /swapfile
+swap_size_mb: 2048
+

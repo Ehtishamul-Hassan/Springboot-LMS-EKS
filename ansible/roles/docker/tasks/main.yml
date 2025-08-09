@@ -1,0 +1,57 @@
+# 1. Install Docker
+- name: Install Docker
+  become: true
+  ansible.builtin.dnf:
+    name: docker
+    state: present
+    update_cache: yes
+  notify: restart docker
+
+# 2. Enable and start Docker service
+- name: Enable and start Docker service
+  become: true
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+
+# 3. Add ec2-user to docker group (for running docker without sudo)
+- name: Add ec2-user to docker group
+  become: true
+  ansible.builtin.user:
+    name: ec2-user
+    groups: docker
+    append: yes
+
+# 4. Allow ec2-user to run Docker commands with sudo without password
+- name: Allow ec2-user to run Docker commands with sudo without password
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/ec2-user-docker
+    content: |
+      ec2-user ALL=(ALL) NOPASSWD: /bin/docker, /usr/bin/docker, /usr/local/bin/docker, /usr/bin/docker-compose
+    owner: root
+    group: root
+    mode: '0440'
+
+# 5. Download Docker Compose
+- name: Download Docker Compose
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+    dest: "{{ docker_compose_path }}"
+    mode: '0755'
+
+# 6. Check Docker version (optional)
+- name: Check Docker version
+  become: true
+  ansible.builtin.command: docker --version
+  register: docker_version
+  changed_when: false
+
+# 7. Check Docker Compose version (optional)
+- name: Check Docker Compose version
+  become: true
+  ansible.builtin.command: "{{ docker_compose_path }} version"
+  register: docker_compose_ver
+  changed_when: false

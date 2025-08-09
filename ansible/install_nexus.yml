@@ -1,0 +1,5 @@
+- name: Install and Configure Nexus
+  hosts: tag_nexus
+  become: true
+  roles:
+    - nexus

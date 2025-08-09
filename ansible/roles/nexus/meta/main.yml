@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Ehtishamul Hassan
+  role_name: nexus
+  description: Installs and configures Nexus Repository Manager
+  license: MIT
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+  min_ansible_version: 2.9
+dependencies: []
+

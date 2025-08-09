@@ -1,0 +1,21 @@
+# Architecture detection (if needed, hardcoded for now)
+arch: "amd64"
+platform: "Linux_amd64"
+
+# AWS CLI
+awscli_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+awscli_zip_path: "/tmp/awscliv2.zip"
+awscli_extract_path: "/tmp/aws"
+
+# kubectl (updated to 1.33.0, build that works for you)
+kubectl_url: "https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/amd64/kubectl"
+kubectl_path: "/usr/local/bin/kubectl"
+
+# eksctl (uses architecture and platform variables)
+eksctl_url: "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_{{ platform }}.tar.gz"
+eksctl_tar_path: "/tmp/eksctl.tar.gz"
+eksctl_extract_dir: "/tmp"
+
+# Automation user
+automation_user: "automation-host"
+automation_group: "automation-host"

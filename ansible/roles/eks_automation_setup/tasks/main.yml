@@ -1,0 +1,73 @@
+---
+# Create user and group
+- name: Create group for automation-host
+  group:
+    name: "{{ automation_group }}"
+    state: present
+
+- name: Create user automation-host
+  user:
+    name: "{{ automation_user }}"
+    group: "{{ automation_group }}"
+    shell: /bin/bash
+    create_home: yes
+
+- name: Add automation-host to sudoers
+  lineinfile:
+    path: /etc/sudoers.d/{{ automation_user }}
+    create: yes
+    mode: '0440'
+    line: '{{ automation_user }} ALL=(ALL) NOPASSWD:ALL'
+
+# Install unzip (needed for awscli)
+- name: Ensure unzip is installed
+  package:
+    name: unzip
+    state: present
+
+# Download and install AWS CLI v2
+- name: Download AWS CLI v2
+  get_url:
+    url: "{{ awscli_url }}"
+    dest: "{{ awscli_zip_path }}"
+
+- name: Unzip AWS CLI v2
+  unarchive:
+    src: "{{ awscli_zip_path }}"
+    dest: "/tmp"
+    remote_src: yes
+
+- name: Install AWS CLI
+  command: "{{ awscli_extract_path }}/install"
+  args:
+    creates: /usr/local/bin/aws
+
+# Download and install kubectl
+- name: Download kubectl
+  get_url:
+    url: "{{ kubectl_url }}"
+    dest: "/tmp/kubectl"
+    mode: '0755'
+
+- name: Move kubectl to bin path
+  copy:
+    src: /tmp/kubectl
+    dest: "{{ kubectl_path }}"
+    mode: '0755'
+    remote_src: yes
+
+- name: Download eksctl archive
+  get_url:
+    url: "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+    dest: "/home/ec2-user/eksctl.tar.gz"
+    mode: '0644'
+
+- name: Extract eksctl
+  unarchive:
+    src: "/home/ec2-user/eksctl.tar.gz"
+    dest: "/home/ec2-user/"
+    remote_src: yes
+
+- name: Move eksctl to /home/ec2-user/
+  command: install -m 0755 /home/ec2-user/eksctl /usr/local/bin/eksctl
+

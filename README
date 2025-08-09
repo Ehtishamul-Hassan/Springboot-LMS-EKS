@@ -1,0 +1,169 @@
+# 📚 Spring Boot Library Management System – CI/CD on AWS with DevOps Tools
+
+This project demonstrates the implementation of a **CI/CD pipeline** for a **Spring Boot** application using top DevOps tools including **Jenkins**, **Ansible**, **Terraform**, **Docker**, **SonarQube**, and **Nexus**, all deployed across multiple **AWS EC2 instances**.
+
+---
+
+## 🔧 Tools & Technologies Used
+
+| Tool         | Purpose                                 |
+|--------------|------------------------------------------|
+| Spring Boot  | Backend application                     |
+| Jenkins      | CI/CD automation                        |
+| Terraform    | Infrastructure provisioning             |
+| Ansible      | Remote configuration management         |
+| Docker       | Containerization & deployment           |
+| SonarQube    | Code quality analysis                   |
+| Nexus        | Artifact repository                     |
+| AWS EC2      | Cloud hosting infrastructure            |
+| Maven        | Build tool                              |
+| GitHub       | Source code management                  |
+| MobaXterm    | SSH & file transfer GUI                 |
+
+---
+
+## 🏗️ Project Architecture
+
+```
+
+```
+                        ┌────────────────────┐
+                        │  My System  │
+                        │ (Code Push to Git) │
+                        └────────┬───────────┘
+                                 │
+                                 ▼
+                    ┌───────────────────────────┐
+                    │    EC2 Instance #1        │
+                    │---------------------------│
+                    │  Jenkins + Ansible + TF   │
+                    │  - Jenkins Pipeline        │
+                    │  - Runs Terraform          │
+                    │  - Triggers Ansible        │
+                    └────────────┬──────────────┘
+                                 │
+     ┌───────────────────────────┼───────────────────────────┐
+     ▼                           ▼                           ▼
+┌─────────────┐         ┌────────────────┐          ┌────────────────┐
+│ EC2 #2      │         │ EC2 #3         │          │ EC2 #4         │
+│ SonarQube   │         │ Nexus Repo     │          │ Docker Host    │
+│ Code Quality│         │ Maven Packages │          │ App Deployment │
+└─────────────┘         └────────────────┘          └────────────────┘
+
+
+```
+
+---
+
+## 📂 Project Structure
+
+```
+
+Spring-14-LibraryManagementSystem/
+├── .github/workflows/             # (Optional) GitHub Actions workflows
+├── .mvn/wrapper/                  # Maven wrapper files
+├── .settings/                     # IDE settings
+├── ansible/                       # Configuration mgmt with Ansible
+│   ├── inventory/                 # AWS dynamic inventory
+│   └── roles/                     # Role-based structure for services
+│       ├── docker/
+│       ├── jenkins/
+│       ├── nexus/
+│       └── sonarqube/
+├── src/main/java/                 # Application source code
+├── src/main/resources/           # Static files & templates
+├── src/test/java/                # Test classes
+├── target/                        # Maven build output
+├── terraform/                     # IaC scripts
+│   └── modules/
+│       ├── ec2/
+│       └── security\_group/
+├── Dockerfile                     # Docker image for app
+├── docker-compose.yml             # Compose file for multi-container setup
+├── Jenkinsfile                    # Jenkins pipeline script
+├── pom.xml                        # Maven project file
+└── README.md                      # Project documentation
+
+````
+
+---
+
+## 🚀 How to Deploy This Project
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Ehtishamul-Hassan/Springboot-LibraryManagementSystem.git
+cd Spring-14-LibraryManagementSystem
+````
+
+### 2. Provision AWS Infrastructure using Terraform
+
+```bash
+cd terraform/
+terraform init
+terraform plan
+terraform apply -auto-approve
+```
+
+### 3. Configure Instances with Ansible
+
+```bash
+cd ansible/
+ansible-playbook -i inventory/aws_ec2.yml docker.yml -u ec2-user --private-key ~/.ssh/ansible_key
+# Repeat for jenkins.yml, sonarqube.yml, nexus.yml if needed
+```
+
+### 4. Set Up Jenkins
+
+* Open Jenkins on the provisioned EC2.
+* Create a new pipeline using `Jenkinsfile` in the root directory.
+* Add necessary credentials (Sonar, Nexus, SSH key).
+
+### 5. Trigger the Pipeline
+
+* Jenkins will:
+
+  * Checkout code from GitHub
+  * Run code quality checks with SonarQube
+  * Build JAR using Maven
+  * Upload JAR to Nexus
+  * Pull JAR from Nexus on Docker EC2
+  * Build Docker image & deploy container
+
+---
+
+## ✅ Features
+
+* Automated code integration, quality scanning, packaging, and deployment
+* Remote provisioning and configuration
+* Modular infrastructure with reusable Terraform and Ansible roles
+* Scalable and cloud-native design using Docker and AWS
+
+---
+
+## 📋 Prerequisites
+
+* AWS CLI & IAM credentials
+* SSH Key Pair for EC2 access
+* Jenkins with plugins: Pipeline, Nexus, SonarScanner
+* Docker and Docker Compose on deployment host
+* Nexus and SonarQube up and running
+
+---
+
+## 👤 Author
+
+**Ehtishamul Hassan**
+📧 [hassanarif282@gmail.com]
+🌐 [LinkedIn](www.linkedin.com/in/ehtishamul-hassan-696972276)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+```
+
+
+

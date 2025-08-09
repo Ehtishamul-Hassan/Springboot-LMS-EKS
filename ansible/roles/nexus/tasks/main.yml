@@ -1,0 +1,127 @@
+- name: Update system packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install Java
+  yum:
+    name: "{{ java_package }}"
+    state: present
+
+- name: Set JAVA_HOME
+  template:
+    src: java.sh.j2
+    dest: /etc/profile.d/java.sh
+    mode: '0755'
+
+- name: Create swap file
+  shell: |
+    fallocate -l {{ swap_size_mb }}M {{ swap_file }} || dd if=/dev/zero of={{ swap_file }} bs=1M count={{ swap_size_mb }}
+    chmod 600 {{ swap_file }}
+    mkswap {{ swap_file }}
+    swapon {{ swap_file }}
+  args:
+    executable: /bin/bash
+  when: swap_file is defined
+  register: swap_created
+  changed_when: false
+
+- name: Ensure swap entry in /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: "{{ swap_file }} swap swap defaults 0 0"
+    state: present
+
+- name: Create nexus group
+  group:
+    name: "{{ nexus_group }}"
+    state: present
+
+- name: Create nexus user and group
+  user:
+    name: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    shell: /bin/bash
+    create_home: yes
+
+
+- name: Allow passwordless sudo for nexus
+  copy:
+    dest: "/etc/sudoers.d/{{ nexus_user }}"
+    content: "{{ nexus_user }} ALL=(ALL) NOPASSWD: ALL"
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Download Nexus tarball
+  get_url:
+    url: "{{ nexus_tarball_url }}"
+    dest: "{{ nexus_tarball_dest }}"
+    mode: '0644'
+
+- name: Extract Nexus
+  unarchive:
+    src: "{{ nexus_tarball_dest }}"
+    dest: /opt
+    remote_src: yes
+    creates: "{{ nexus_install_dir }}"
+
+- name: Rename extracted Nexus folder
+  command: mv /opt/nexus-{{ nexus_version }} {{ nexus_install_dir }}
+  args:
+    creates: "{{ nexus_install_dir }}"
+
+- name: Ensure correct ownership
+  file:
+    path: "{{ item }}"
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    recurse: yes
+  loop:
+    - "{{ nexus_install_dir }}"
+    - "{{ nexus_work_dir }}"
+
+- name: Create nexus.rc file
+  copy:
+    dest: "{{ nexus_install_dir }}/bin/nexus.rc"
+    content: 'run_as_user="{{ nexus_user }}"'
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    mode: '0644'
+
+# - name: Generate JVM options file
+#   template:
+#     src: nexus.vmoptions.j2
+#     dest: "{{ nexus_install_dir }}/bin/nexus.vmoptions"
+#     owner: "{{ nexus_user }}"
+#     group: "{{ nexus_group }}"
+#     mode: '0644'
+
+- name: Check if nexus.vmoptions already exists
+  stat:
+    path: "{{ nexus_install_dir }}/bin/nexus.vmoptions"
+  register: nexus_vmoptions_file
+
+- name: Generate JVM options file
+  template:
+    src: nexus.vmoptions.j2
+    dest: "{{ nexus_install_dir }}/bin/nexus.vmoptions"
+    owner: "{{ nexus_user }}"
+    group: "{{ nexus_group }}"
+    mode: '0644'
+  when: not nexus_vmoptions_file.stat.exists
+
+- name: Generate systemd service file
+  template:
+    src: nexus.service.j2
+    dest: /etc/systemd/system/nexus.service
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart Nexus
+
+- name: Enable and start Nexus service
+  systemd:
+    name: nexus
+    enabled: yes
+    state: started
+

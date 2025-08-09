@@ -1,0 +1,104 @@
+---
+- name: Install dependencies
+  yum:
+    name:
+      - wget
+      - unzip
+      - git
+      - java-21-amazon-corretto-devel
+      - python3  
+      - python3-pip  
+    state: present
+
+- name: Check current pip version
+  command: pip3 --version
+  register: pip_version_check
+  changed_when: false
+
+- name: Upgrade pip to latest version (only if not latest)
+  command: python3 -m pip install --upgrade pip
+  when: "'21.3.1' not in pip_version_check.stdout"
+
+
+- name: Install boto3 and botocore via pip
+  pip:
+    name:
+      - boto3
+      - botocore
+    executable: pip3
+
+- name: Create Maven install directory
+  file:
+    path: "{{ install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download Maven
+  get_url:
+    url: "{{ maven_url }}"
+    dest: "/tmp/{{ maven_zip }}"
+
+- name: Extract Maven
+  unarchive:
+    src: "/tmp/{{ maven_zip }}"
+    dest: "{{ install_dir }}"
+    remote_src: yes
+
+- name: Set Maven and Java environment variables
+  blockinfile:
+    path: "{{ profile_file }}"
+    block: |
+      export M2_HOME={{ install_dir }}/apache-maven-{{ maven_version }}
+      export PATH=$M2_HOME/bin:$PATH
+      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+      export PATH=$JAVA_HOME/bin:$PATH
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Maven & Java"
+
+- name: Source the updated profile (not effective in current session but ready for future)
+  shell: source {{ profile_file }}
+  args:
+    executable: /bin/bash
+
+- name: Add Jenkins repository
+  get_url:
+    url: "{{ jenkins_repo_url }}"
+    dest: /etc/yum.repos.d/jenkins.repo
+
+- name: Import Jenkins repository GPG key
+  rpm_key:
+    state: present
+    key: "{{ jenkins_repo_key }}"
+
+- name: Install Jenkins
+  yum:
+    name: jenkins
+    state: present
+
+- name: Enable and start Jenkins
+  service:
+    name: jenkins
+    enabled: yes
+    state: started
+  notify: restart jenkins
+
+- name: Check Java version
+  command: java -version
+  register: java_output
+  ignore_errors: yes
+
+- name: Check Maven version
+  command: "{{ install_dir }}/apache-maven-{{ maven_version }}/bin/mvn -v"
+  register: maven_output
+  ignore_errors: yes
+
+- name: Check Jenkins version
+  command: jenkins --version
+  register: jenkins_output
+  ignore_errors: yes
+
+- name: Show Installation Summary
+  debug:
+    msg:
+      - "☕ Java: {{ java_output.stderr }}"
+      - "📦 Maven: {{ maven_output.stdout }}"
+      - "🔧 Jenkins: {{ jenkins_output.stdout }}"

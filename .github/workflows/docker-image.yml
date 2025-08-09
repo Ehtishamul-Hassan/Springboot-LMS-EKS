@@ -1,0 +1,71 @@
+name: Build and Deploy Docker Compose App
+
+on:
+  workflow_dispatch:  # you can also use `push` if needed
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t doceh/springboot-lib-app:latest .
+        docker push doceh/springboot-lib-app:latest
+
+    - name: Deploy to EC2 via SSH
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /home/ec2-user/deployment-directory || mkdir -p /home/ec2-user/deployment-directory && cd /home/ec2-user/deployment-directory
+          echo "
+          version: '3'
+          services:
+            mysql:
+              image: mysql:8.0
+              container_name: mysql-dbcontainer
+              environment:
+                MYSQL_DATABASE: securelibrarymanagementsystem
+                MYSQL_ROOT_PASSWORD: 1234
+              ports:
+                - '3306:3306'
+              volumes:
+                - mysql_data:/var/lib/mysql
+              networks:
+                - spring-net
+
+            springboot-app:
+              image: doceh/springboot-lib-app:latest
+              container_name: library-app-container
+              environment:
+                DB_URL: jdbc:mysql://mysql:3306/securelibrarymanagementsystem
+                DB_USER: root
+                DB_PASS: 1234
+              depends_on:
+                - mysql
+              ports:
+                - '8080:8080'
+              networks:
+                - spring-net
+
+          volumes:
+            mysql_data:
+
+          networks:
+            spring-net:
+          " > docker-compose.yml
+          docker compose down || true
+          docker pull doceh/springboot-lib-app:latest
+          docker compose up -d

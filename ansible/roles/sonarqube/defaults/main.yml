@@ -1,0 +1,7 @@
+---
+sonarqube_version: 8.9.6.50800
+sonarqube_user: sonar
+sonarqube_group: sonar
+sonarqube_home: /opt/sonarqube
+sonarqube_java_home: /usr/lib/jvm/java-11-amazon-corretto.x86_64
+

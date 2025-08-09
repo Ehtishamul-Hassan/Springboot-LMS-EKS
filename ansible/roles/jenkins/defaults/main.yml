@@ -1,0 +1,5 @@
+---
+maven_version: "3.9.9"
+install_dir: "/opt/maven"
+profile_file: "/home/jenkins/.bashrc"
+

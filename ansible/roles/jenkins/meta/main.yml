@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Ehtishamul Hassan
+  role_name: jenkins
+  namespace: Ehtishamul-Hassan
+  description: An Ansible role to install and configure Jenkins
+  license: MIT
+  min_ansible_version: 2.9
+
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+
+  galaxy_tags:
+    - jenkins
+    - ci
+    - devops
+
+dependencies: []
