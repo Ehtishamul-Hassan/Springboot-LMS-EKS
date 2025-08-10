@@ -19,5 +19,5 @@ app:
 env:
   dbUrl: jdbc:mysql://eks-db.cz82eooaw47s.ap-south-1.rds.amazonaws.com:3306/securelibrarymanagementsystem
   dbUser: root
-  dbPass: 12345678
+  dbPass: "12345678"
   dbDriver: com.mysql.cj.jdbc.Driver
