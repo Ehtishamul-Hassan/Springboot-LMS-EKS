@@ -1,8 +1,17 @@
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: {{ .Release.Name }}-config
+# data:
+#   DB_URL: {{ .Values.env.dbUrl | quote }}
+#   DB_USER: {{ .Values.env.dbUser | quote }}
+#   DB_DRIVER: {{ .Values.env.dbDriver | quote }}
+
+# templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-config
 data:
   DB_URL: {{ .Values.env.dbUrl | quote }}
-  DB_USER: {{ .Values.env.dbUser | quote }}
   DB_DRIVER: {{ .Values.env.dbDriver | quote }}

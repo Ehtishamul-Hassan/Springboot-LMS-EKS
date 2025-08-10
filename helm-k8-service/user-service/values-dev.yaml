@@ -1,3 +1,15 @@
+# app:
+#   name: user-service
+#   image: doceh/springboot-lib-app-aws
+#   port: 8080
+#   replicas: 2
+
+# env:
+#   dbUrl: jdbc:mysql://eks-db.cz82eooaw47s.ap-south-1.rds.amazonaws.com:3306/securelibrarymanagementsystem
+#   dbUser: root
+#   dbPass: 12345678
+#   dbDriver: com.mysql.cj.jdbc.Driver
+
 app:
   name: user-service
   image: doceh/springboot-lib-app-aws
