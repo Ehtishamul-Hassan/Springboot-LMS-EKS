@@ -71,7 +71,7 @@ module "eks" {
   cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
   worker_node_role_arn = aws_iam_role.worker_node_role.arn
   subnet_ids           = module.network.private_subnet_ids
-  instance_types       = ["t3.medium"]
+  instance_types       = ["t3.small"]
   node_desired_size    = 2
   node_min_size        = 1
   node_max_size        = 3
