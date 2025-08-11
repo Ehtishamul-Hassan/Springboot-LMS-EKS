@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ .Values.app.name }}-svc
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: {{ .Values.app.name }}
   ports:
