@@ -68,13 +68,15 @@ data "aws_iam_role" "worker_node_role" {
 module "eks" {
   source               = "../../modules/eks"
   cluster_name         = "my-ec2-eks"
-  cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
-  worker_node_role_arn = aws_iam_role.worker_node_role.arn
-  subnet_ids           = module.network.private_subnet_ids
-  instance_types       = ["t3.small"]
-  node_desired_size    = 2
-  node_min_size        = 1
-  node_max_size        = 3
+  cluster_role_arn     = data.aws_iam_role.eks_cluster_role[0].arn
+  worker_node_role_arn = data.aws_iam_role.worker_node_role[0].arn
+  # cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
+  # worker_node_role_arn = aws_iam_role.worker_node_role.arn
+  subnet_ids        = module.network.private_subnet_ids
+  instance_types    = ["t3.small"]
+  node_desired_size = 2
+  node_min_size     = 1
+  node_max_size     = 3
 }
 
 ##############
