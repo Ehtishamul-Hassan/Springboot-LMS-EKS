@@ -1,0 +1,18 @@
+server:
+  persistentVolume:
+    enabled: false
+
+  service:
+    type: ClusterIP
+    port: 80
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+
+
+
+   

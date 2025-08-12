@@ -1,0 +1,11 @@
+persistence:
+  enabled: false  
+
+service:
+  type: ClusterIP  
+
+ingress:
+  enabled: false  # We’ll create ingress separately
+
+adminUser: admin
+adminPassword: admin123
