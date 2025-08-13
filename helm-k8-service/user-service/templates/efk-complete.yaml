@@ -220,7 +220,7 @@ spec:
 
 ---
 # -------------------------
-# Kibana Deployment + Service
+# Kibana Deployment + NodePort Service + ALB Ingress
 # -------------------------
 apiVersion: v1
 kind: Service
@@ -228,10 +228,11 @@ metadata:
   name: kibana
   namespace: efk
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 5601
       targetPort: 5601
+      nodePort: 32001
   selector:
     app: kibana
 ---
@@ -258,3 +259,25 @@ spec:
           env:
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch:9200"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-ingress
+  namespace: efk
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana
+                port:
+                  number: 5601
