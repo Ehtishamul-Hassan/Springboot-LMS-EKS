@@ -8,17 +8,6 @@ metadata:
 
 ---
 # -------------------------
-# StorageClass (manual)
-# -------------------------
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: manual
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-
----
-# -------------------------
 # PersistentVolumes for Elasticsearch
 # -------------------------
 apiVersion: v1
@@ -86,7 +75,7 @@ metadata:
   namespace: efk
 spec:
   serviceName: "elasticsearch"
-  replicas: 1
+  replicas: 1 # Reduce for small clusters
   selector:
     matchLabels:
       app: elasticsearch
@@ -141,7 +130,7 @@ spec:
 
 ---
 # -------------------------
-# Fluent Bit RBAC + ConfigMap + DaemonSet
+# Fluentbit RBAC + ConfigMap + DaemonSet
 # -------------------------
 apiVersion: v1
 kind: ServiceAccount
@@ -215,7 +204,6 @@ data:
         Host            elasticsearch.efk.svc.cluster.local
         Port            9200
         Logstash_Format On
-        Logstash_Prefix kubernetes_cluster
         Replace_Dots    On
         Retry_Limit     False
 
