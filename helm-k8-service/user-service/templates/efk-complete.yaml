@@ -166,26 +166,47 @@ metadata:
   name: fluent-bit-config
   namespace: efk
 data:
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+        Decode_Field_As   escaped    log
+
   fluent-bit.conf: |
     [SERVICE]
         Flush        1
         Log_Level    info
+        Parsers_File parsers.conf
+
     [INPUT]
-        Name         tail
-        Path         /var/log/containers/*.log
-        Parser       docker
-        Tag          kube.*
-        Refresh_Interval 5
+        Name              tail
+        Path              /var/log/containers/*.log
+        Parser            docker
+        Tag               kube.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+
     [FILTER]
-        Name         kubernetes
-        Match        kube.*
+        Name                kubernetes
+        Match               kube.*
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+
     [OUTPUT]
-        Name         es
-        Match        *
-        Host         elasticsearch.efk.svc.cluster.local
-        Port         9200
-        Index        kubernetes_cluster
-        Type         _doc
+        Name            es
+        Match           *
+        Host            elasticsearch.efk.svc.cluster.local
+        Port            9200
+        Logstash_Format On
+        Replace_Dots    On
+        Retry_Limit     False
+
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -217,6 +238,11 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: fluent-bit-config
+            items:
+              - key: fluent-bit.conf
+                path: fluent-bit.conf
+              - key: parsers.conf
+                path: parsers.conf
 
 ---
 # -------------------------
