@@ -1,0 +1,111 @@
+# -------------------------
+# Namespace
+# -------------------------
+namespace: efk
+
+# -------------------------
+# StorageClass
+# -------------------------
+storageClass:
+  name: manual
+  provisioner: kubernetes.io/no-provisioner
+  volumeBindingMode: WaitForFirstConsumer
+
+# -------------------------
+# PersistentVolumes
+# -------------------------
+persistentVolumes:
+  - name: pv-elasticsearch-controlplane
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    path: /data/elasticsearch-controlplane
+  - name: pv-elasticsearch-node01
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    path: /data/elasticsearch-node01
+  - name: pv-elasticsearch-node02
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    path: /data/elasticsearch-node02
+
+# -------------------------
+# Elasticsearch
+# -------------------------
+elasticsearch:
+  name: elasticsearch
+  appLabel: elasticsearch
+  replicas: 1
+  image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+  pvSize: 5Gi
+  security:
+    enabled: "false"
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+  service:
+    name: elasticsearch
+    ports:
+      http: 9200
+      transport: 9300
+
+# -------------------------
+# Fluent Bit
+# -------------------------
+fluentbit:
+  image: fluent/fluent-bit:2.1
+  parsersConf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+        Decode_Field_As   escaped    log
+  fluentBitConf: |
+    [SERVICE]
+        Flush        1
+        Log_Level    info
+        Parsers_File parsers.conf
+
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/*.log
+        Parser            docker
+        Tag               kube.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+
+    [OUTPUT]
+        Name            es
+        Match           *
+        Host            elasticsearch.efk.svc.cluster.local
+        Port            9200
+        Logstash_Format On
+        Logstash_Prefix kubernetes_cluster
+        Replace_Dots    On
+        Retry_Limit     False
+
+# -------------------------
+# Kibana
+# -------------------------
+kibana:
+  replicas: 1
+  image: docker.elastic.co/kibana/kibana:8.13.0
+  port: 5601
+  nodePort: 32001
+  ingress:
+    scheme: internet-facing
+    targetType: ip
+    listenPorts: '[{"HTTP": 80}]'
