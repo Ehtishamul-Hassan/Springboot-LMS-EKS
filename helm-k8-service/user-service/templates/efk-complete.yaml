@@ -253,9 +253,9 @@ metadata:
   name: kibana-ingress
   namespace: {{ .Values.namespace }}
 annotations:
-  alb.ingress.kubernetes.io/scheme: '{{ .Values.kibana.ingress.scheme }}'
-  alb.ingress.kubernetes.io/target-type: '{{ .Values.kibana.ingress.targetType }}'
-  alb.ingress.kubernetes.io/listen-ports: '{{ .Values.kibana.ingress.listenPorts }}'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
 spec:
   ingressClassName: alb
   rules:
