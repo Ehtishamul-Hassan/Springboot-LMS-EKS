@@ -1,3 +1,19 @@
+app:
+  name: user-service
+  image: doceh/springboot-lib-app-aws
+  port: 8080
+  replicas: 2
+
+env:
+  dbUrl: jdbc:mysql://eks-db.cz82eooaw47s.ap-south-1.rds.amazonaws.com:3306/securelibrarymanagementsystem
+  dbUser: root
+  dbPass: "12345678"
+  dbDriver: com.mysql.cj.jdbc.Driver
+
+ingress:
+  enabled: true
+  host: ""
+
 # -------------------------
 # Namespace
 # -------------------------
@@ -93,7 +109,7 @@ fluentbit:
         Host            elasticsearch.efk.svc.cluster.local
         Port            9200
         Logstash_Format On
-        Logstash_Prefix kubernetes_cluster
+        Logstash_Prefix fluent-bit
         Replace_Dots    On
         Retry_Limit     False
 
@@ -104,7 +120,8 @@ kibana:
   replicas: 1
   image: docker.elastic.co/kibana/kibana:8.13.0
   port: 5601
-  nodePort: 32001
+  serviceType: ClusterIP   
+  nodePort: null  
   ingress:
     scheme: internet-facing
     targetType: ip

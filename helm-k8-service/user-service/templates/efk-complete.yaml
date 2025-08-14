@@ -213,7 +213,7 @@ metadata:
   name: kibana
   namespace: {{ .Values.namespace }}
 spec:
-  type: NodePort
+  type: {{ .Values.kibana.serviceType }}
   ports:
     - port: {{ .Values.kibana.port }}
       targetPort: {{ .Values.kibana.port }}
@@ -252,12 +252,13 @@ kind: Ingress
 metadata:
   name: kibana-ingress
   namespace: {{ .Values.namespace }}
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: {{ .Values.kibana.ingress.scheme }}
-    alb.ingress.kubernetes.io/target-type: {{ .Values.kibana.ingress.targetType }}
-    alb.ingress.kubernetes.io/listen-ports: {{ .Values.kibana.ingress.listenPorts }}
+annotations:
+  alb.ingress.kubernetes.io/scheme: '{{ .Values.kibana.ingress.scheme }}'
+  alb.ingress.kubernetes.io/target-type: '{{ .Values.kibana.ingress.targetType }}'
+  alb.ingress.kubernetes.io/listen-ports: '{{ .Values.kibana.ingress.listenPorts }}'
+
 spec:
+  ingressClassName: alb
   rules:
     - http:
         paths:
@@ -268,3 +269,4 @@ spec:
                 name: kibana
                 port:
                   number: {{ .Values.kibana.port }}
+
