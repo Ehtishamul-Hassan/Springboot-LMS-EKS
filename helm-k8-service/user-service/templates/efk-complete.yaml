@@ -256,7 +256,6 @@ annotations:
   alb.ingress.kubernetes.io/scheme: '{{ .Values.kibana.ingress.scheme }}'
   alb.ingress.kubernetes.io/target-type: '{{ .Values.kibana.ingress.targetType }}'
   alb.ingress.kubernetes.io/listen-ports: '{{ .Values.kibana.ingress.listenPorts }}'
-
 spec:
   ingressClassName: alb
   rules:
