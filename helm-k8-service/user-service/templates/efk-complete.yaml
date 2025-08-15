@@ -162,7 +162,7 @@ data:
   parsers.conf: |
     {{ .Values.fluentbit.parserConf | default "" | nindent 4 }}
 
-  fluentbit.conf: |
+  fluent-bit.conf: |
     {{ .Values.fluentbit.mainConf | default "" | nindent 4 }}
 
 
