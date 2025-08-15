@@ -162,8 +162,8 @@ data:
   parsers.conf: |
     {{ .Values.fluentbit.parsers.conf | nindent 4 }}
 
-  fluent-bit.conf: |
-    {{ .Values.fluentbit.fluent-bit.conf | nindent 4 }}
+  fluentbit.conf: |
+    {{ .Values.fluentbit.fluentbit.conf | nindent 4 }}
 
 ---
 apiVersion: apps/v1

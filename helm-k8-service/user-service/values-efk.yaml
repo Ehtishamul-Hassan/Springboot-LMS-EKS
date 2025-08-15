@@ -72,7 +72,7 @@ elasticsearch:
 # -------------------------
 fluentbit:
   image: fluent/fluent-bit:2.1
-  fluent-bit.conf: |
+  fluentbit.conf: |
     [SERVICE]
         Flush        1
         Log_Level    info
