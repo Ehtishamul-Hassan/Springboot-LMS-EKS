@@ -72,46 +72,54 @@ elasticsearch:
 # -------------------------
 fluentbit:
   image: fluent/fluent-bit:2.1
-  parsersConf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-        Decode_Field_As   escaped    log
-  fluentBitConf: |
+  fluent-bit.conf: |
     [SERVICE]
         Flush        1
         Log_Level    info
+        Daemon       Off
         Parsers_File parsers.conf
 
+    # Input - Kubernetes Container Logs
     [INPUT]
         Name              tail
         Path              /var/log/containers/*.log
         Parser            docker
         Tag               kube.*
         Refresh_Interval  5
-        Mem_Buf_Limit     5MB
         Skip_Long_Lines   On
+        Mem_Buf_Limit     5MB
+        DB                /var/log/flb_kube.db
 
+    # Kubernetes Metadata
     [FILTER]
         Name                kubernetes
         Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
         Merge_Log           On
-        Keep_Log            Off
+        Merge_Log_Key       log
         K8S-Logging.Parser  On
-        K8S-Logging.Exclude Off
+        K8S-Logging.Exclude On
 
+    # Output to Elasticsearch
     [OUTPUT]
         Name            es
-        Match           *
+        Match           kube.*
         Host            elasticsearch.efk.svc.cluster.local
         Port            9200
+        Index           fluent-bit
+        Type            _doc
         Logstash_Format On
-        Logstash_Prefix fluent-bit
+        Time_Key        @timestamp
         Replace_Dots    On
         Retry_Limit     False
+
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
 
 # -------------------------
 # Kibana
