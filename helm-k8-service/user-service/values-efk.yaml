@@ -72,7 +72,7 @@ elasticsearch:
 # -------------------------
 fluentbit:
   image: fluent/fluent-bit:2.1
-  fluentbit.conf: |
+  mainConf: |
     [SERVICE]
         Flush        1
         Log_Level    info
@@ -113,7 +113,7 @@ fluentbit:
         Replace_Dots    On
         Retry_Limit     False
 
-  parsers.conf: |
+  parserConf: |
     [PARSER]
         Name        docker
         Format      json

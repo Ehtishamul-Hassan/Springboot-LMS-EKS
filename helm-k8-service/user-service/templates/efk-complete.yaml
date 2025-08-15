@@ -160,10 +160,10 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   parsers.conf: |
-    {{ .Values.fluentbit.parsers.conf | default "" | nindent 4 }}
+    {{ .Values.fluentbit.parserConf | default "" | nindent 4 }}
 
   fluentbit.conf: |
-    {{ .Values.fluentbit.fluentbit.conf | default "" | nindent 4 }}
+    {{ .Values.fluentbit.mainConf | default "" | nindent 4 }}
 
 
 ---
