@@ -160,10 +160,11 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   parsers.conf: |
-    {{ .Values.fluentbit.parsers.conf | nindent 4 }}
+    {{ .Values.fluentbit.parsers.conf | default "" | nindent 4 }}
 
   fluentbit.conf: |
-    {{ .Values.fluentbit.fluentbit.conf | nindent 4 }}
+    {{ .Values.fluentbit.fluentbit.conf | default "" | nindent 4 }}
+
 
 ---
 apiVersion: apps/v1
