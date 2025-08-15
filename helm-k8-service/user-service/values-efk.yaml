@@ -104,11 +104,9 @@ fluentbit:
     [OUTPUT]
         Name            es
         Match           kube.*
-        Host            elasticsearch.efk.svc.cluster.local
+        Host            elasticsearch-0.elasticsearch.efk.svc.cluster.local
         Port            9200
         Index           fluent-bit
-        Type            _doc
-        Logstash_Format On
         Time_Key        @timestamp
         Replace_Dots    On
         Retry_Limit     False
