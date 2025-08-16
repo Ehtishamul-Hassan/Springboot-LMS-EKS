@@ -62,11 +62,12 @@ module "eks" {
   cluster_name         = "my-ec2-eks"
   cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
   worker_node_role_arn = aws_iam_role.worker_node_role.arn
-  subnet_ids           = module.network.private_subnet_ids
-  instance_types       = ["t3.medium"]
-  node_desired_size    = 2
-  node_min_size        = 1
-  node_max_size        = 3
+  # subnet_ids           = module.network.private_subnet_ids
+  subnet_ids        = var.enable_network ? module.network[0].private_subnet_ids : []
+  instance_types    = ["t3.medium"]
+  node_desired_size = 2
+  node_min_size     = 1
+  node_max_size     = 3
 }
 
 ##############
@@ -74,11 +75,13 @@ module "eks" {
 ##############
 
 module "rds" {
-  count              = var.enable_rds ? 1 : 0
-  source             = "../../modules/rds"
-  name               = "eks"
-  private_subnet_ids = module.network.private_subnet_ids
-  rds_sg_id          = module.network.rds_sg_id
+  count  = var.enable_rds ? 1 : 0
+  source = "../../modules/rds"
+  name   = "eks"
+  # private_subnet_ids = module.network.private_subnet_ids
+  # rds_sg_id          = module.network.rds_sg_id
+  private_subnet_ids = var.enable_network ? module.network[0].private_subnet_ids : []
+  rds_sg_id          = var.enable_network ? module.network[0].rds_sg_id : ""
   db_username        = "root"
   db_password        = "12345678"
   db_name            = "securelibrarymanagementsystem"

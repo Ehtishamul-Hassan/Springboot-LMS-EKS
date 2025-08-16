@@ -8,32 +8,33 @@ private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]
 
 
 
-enable_rds = false
-enable_eks = false
-enable_ec2 = true
+enable_rds     = false
+enable_eks     = false
+enable_network = false
+enable_ec2     = true
 
 instances = {
-  # nexus = {
-  #   az            = "ap-south-1a"
-  #   tag           = "1a"
-  #   name          = "nexus-server"
-  #   instance_type = "t2.micro"
-  #   extra_tags = {
-  #     Name        = "nexus"
-  #     Environment = "dev"
-  #   }
-  # }
+  nexus = {
+    az            = "ap-south-1a"
+    tag           = "1a"
+    name          = "nexus-server"
+    instance_type = "t2.micro"
+    extra_tags = {
+      Name        = "nexus"
+      Environment = "dev"
+    }
+  }
 
-  # docker = {
-  #   az            = "ap-south-1a"
-  #   tag           = "1a"
-  #   name          = "docker-server"
-  #   instance_type = "t2.micro"
-  #   extra_tags = {
-  #     Name        = "docker"
-  #     Environment = "dev"
-  #   }
-  # }
+  docker = {
+    az            = "ap-south-1a"
+    tag           = "1a"
+    name          = "docker-server"
+    instance_type = "t2.micro"
+    extra_tags = {
+      Name        = "docker"
+      Environment = "dev"
+    }
+  }
 
   automationHost = {
     az            = "ap-south-1a"
