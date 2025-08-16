@@ -57,6 +57,7 @@ module "ec2_instances" {
 ##################
 
 module "eks" {
+  count                = var.enable_eks ? 1 : 0
   source               = "../../modules/eks"
   cluster_name         = "my-ec2-eks"
   cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
@@ -73,6 +74,7 @@ module "eks" {
 ##############
 
 module "rds" {
+  count              = var.enable_rds ? 1 : 0
   source             = "../../modules/rds"
   name               = "eks"
   private_subnet_ids = module.network.private_subnet_ids

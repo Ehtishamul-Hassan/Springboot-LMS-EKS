@@ -30,6 +30,11 @@ variable "enable_ec2" {
   default = true
 }
 
+variable "enable_rds" {
+  type    = bool
+  default = true
+}
+
 variable "vpc_cidr" {
   type = string
 }
