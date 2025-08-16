@@ -71,3 +71,38 @@
 - name: Move eksctl to /home/ec2-user/
   command: install -m 0755 /home/ec2-user/eksctl /usr/local/bin/eksctl
 
+  # -------------------------
+# Install Helm
+# -------------------------
+- name: Download Helm install script
+  get_url:
+    url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
+    dest: "/home/ec2-user/get_helm.sh"
+    mode: '0755'
+
+- name: Run Helm install script
+  command: /home/ec2-user/get_helm.sh
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Verify Helm version
+  command: helm version
+  register: helm_version
+
+
+# -------------------------
+# Clone Git repository
+# -------------------------
+- name: Ensure git is installed
+  package:
+    name: git
+    state: present
+
+- name: Clone Git repository
+  git:
+    repo: "https://github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git"
+    dest: "/home/ec2-user/Springboot-LMS-EKS"
+    version: main
+    force: yes
+
+
