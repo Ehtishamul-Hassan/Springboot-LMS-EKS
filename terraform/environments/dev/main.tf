@@ -21,13 +21,14 @@ data "aws_security_group" "default" {
 ############
 
 module "network" {
+  count                = var.enable_network ? 1 : 0
   source               = "../../modules/network"
   name                 = "eks"
   vpc_cidr             = var.vpc_cidr
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
   availability_zones   = var.availability_zones
-  cluster_name         = "dev-cluster"
+  cluster_name         = "my-ec2-eks"
 }
 
 ###############
