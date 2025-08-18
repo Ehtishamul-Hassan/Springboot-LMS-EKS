@@ -25,20 +25,18 @@
     dest: "{{ install_dir }}"
     remote_src: yes
 
-- name: Set Maven and Java environment variables
-  blockinfile:
-    path: "{{ profile_file }}"
-    block: |
+- name: Set Maven and Java environment variables system-wide
+  copy:
+    dest: /etc/profile.d/maven_java.sh
+    content: |
       export M2_HOME={{ install_dir }}/apache-maven-{{ maven_version }}
       export PATH=$M2_HOME/bin:$PATH
       export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
       export PATH=$JAVA_HOME/bin:$PATH
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - Maven & Java"
+    owner: root
+    group: root
+    mode: '0644'
 
-- name: Source the updated profile (not effective in current session but ready for future)
-  shell: source {{ profile_file }}
-  args:
-    executable: /bin/bash
 
 # ✅ Grant ec2-user full sudo without password
 - name: Allow ec2-user passwordless sudo for all commands
