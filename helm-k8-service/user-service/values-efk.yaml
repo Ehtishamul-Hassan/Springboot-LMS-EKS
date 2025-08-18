@@ -1,6 +1,7 @@
 app:
   name: user-service
-  image: doceh/springboot-lib-app-aws
+  # image: doceh/springboot-lib-app-aws
+  image: "PLACEHOLDER" 
   port: 8080
   replicas: 2
 
