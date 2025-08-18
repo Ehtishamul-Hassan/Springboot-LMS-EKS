@@ -1,0 +1,5 @@
+---
+maven_zip: "apache-maven-{{ maven_version }}-bin.zip"
+maven_url: "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/{{ maven_version }}/{{ maven_zip }}"
+
+

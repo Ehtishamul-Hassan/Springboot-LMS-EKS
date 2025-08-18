@@ -1,0 +1,6 @@
+---
+- name: Install AWS CLI, kubectl, and eksctl
+  hosts: tag_build-agent
+  become: true
+  roles:
+    - build_agent

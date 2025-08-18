@@ -36,14 +36,38 @@ instances = {
     }
   }
 
-  automationHost = {
+  build = {
     az            = "ap-south-1a"
     tag           = "1a"
-    name          = "eks-automation-host"
+    name          = "build-agent"
     instance_type = "t2.micro"
     extra_tags = {
-      Name        = "automation-host"
+      Name        = "build-agent"
       Environment = "dev"
     }
   }
+
+
+
+  # sonar = {
+  #   az            = "ap-south-1a"
+  #   tag           = "1a"
+  #   name          = "sonar-server"
+  #   instance_type = "t3.meduim"
+  #   extra_tags = {
+  #     Name        = "sonar"
+  #     Environment = "dev"
+  #   }
+  # }
+
+  # automationHost = {
+  #   az            = "ap-south-1a"
+  #   tag           = "1a"
+  #   name          = "eks-automation-host"
+  #   instance_type = "t2.micro"
+  #   extra_tags = {
+  #     Name        = "automation-host"
+  #     Environment = "dev"
+  #   }
+  # }
 }

@@ -1,3 +1,12 @@
+---
+# 0. Install Java 21 (Amazon Corretto)
+- name: Install Java 21 Amazon Corretto
+  become: true
+  ansible.builtin.dnf:
+    name: java-21-amazon-corretto-devel
+    state: present
+    update_cache: yes
+
 # 1. Install Docker
 - name: Install Docker
   become: true

@@ -1,0 +1,73 @@
+---
+- name: Install dependencies
+  yum:
+    name:
+      - wget
+      - unzip
+      - git
+      - java-21-amazon-corretto-devel
+    state: present
+
+- name: Create Maven install directory
+  file:
+    path: "{{ install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download Maven
+  get_url:
+    url: "{{ maven_url }}"
+    dest: "/tmp/{{ maven_zip }}"
+
+- name: Extract Maven
+  unarchive:
+    src: "/tmp/{{ maven_zip }}"
+    dest: "{{ install_dir }}"
+    remote_src: yes
+
+- name: Set Maven and Java environment variables
+  blockinfile:
+    path: "{{ profile_file }}"
+    block: |
+      export M2_HOME={{ install_dir }}/apache-maven-{{ maven_version }}
+      export PATH=$M2_HOME/bin:$PATH
+      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+      export PATH=$JAVA_HOME/bin:$PATH
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Maven & Java"
+
+- name: Source the updated profile (not effective in current session but ready for future)
+  shell: source {{ profile_file }}
+  args:
+    executable: /bin/bash
+
+# ✅ Grant ec2-user full sudo without password
+- name: Allow ec2-user passwordless sudo for all commands
+  copy:
+    dest: /etc/sudoers.d/ec2-user
+    content: |
+      ec2-user ALL=(ALL) NOPASSWD:ALL
+    owner: root
+    group: root
+    mode: '0440'    
+
+- name: Check Java version
+  command: java -version
+  register: java_output
+  ignore_errors: yes
+
+- name: Check Maven version
+  command: "{{ install_dir }}/apache-maven-{{ maven_version }}/bin/mvn -v"
+  register: maven_output
+  ignore_errors: yes
+
+- name: Check Git version
+  command: git --version
+  register: git_output
+  ignore_errors: yes
+
+- name: Show Installation Summary
+  debug:
+    msg:
+      - "☕ Java: {{ java_output.stderr }}"
+      - "📦 Maven: {{ maven_output.stdout }}"
+      - "🔧 Git: {{ git_output.stdout }}"

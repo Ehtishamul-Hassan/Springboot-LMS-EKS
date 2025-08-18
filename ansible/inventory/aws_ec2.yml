@@ -8,6 +8,7 @@ filters:
     - nexus
     - docker
     - automation-host
+    - build-agent
 keyed_groups:
   - prefix: tag
     key: tags.Name

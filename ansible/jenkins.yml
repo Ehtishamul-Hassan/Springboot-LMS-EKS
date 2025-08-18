@@ -1,5 +1,5 @@
 - name: Setup Jenkins and Maven
-  hosts: locahost
+  hosts: localhost
   roles:
     - jenkins
 
