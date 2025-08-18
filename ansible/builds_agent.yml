@@ -1,5 +1,5 @@
 ---
-- name: Install AWS CLI, kubectl, and eksctl
+- name: Install Java Maven Git
   hosts: tag_build-agent
   become: true
   roles:

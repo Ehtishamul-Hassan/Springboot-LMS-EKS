@@ -42,7 +42,7 @@
   args:
     creates: /usr/local/bin/aws
 
-# Download and install kubectl
+# Download and install kubectl and eksctl
 - name: Download kubectl
   get_url:
     url: "{{ kubectl_url }}"
