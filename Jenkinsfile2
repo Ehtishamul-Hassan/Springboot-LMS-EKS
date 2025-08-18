@@ -3,28 +3,30 @@ pipeline {
 
     environment {
         PATH = "$PATH:/opt/maven/apache-maven-3.9.9/bin"
-        GIT_REPO = 'https://github.com/Ehtishamul-Hassan/Springboot-LMS.git'
+        GIT_REPO = 'https://github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git'
         BRANCH = 'main'
-        REMOTE_HOST = '13.232.225.107'
+        REMOTE_HOST = '13.201.48.125'
+        REMOTE_AUTOMATION_HOST = '43.205.113.157'
         REMOTE_USER = 'ec2-user'
         REMOTE_DIR  = '/home/ec2-user/docker-build'
+        AWS_REGION = 'ap-south-1'
+        ECR_REPO = '897722672704.dkr.ecr.ap-south-1.amazonaws.com/springboot-lib-app'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
         stage('Checkout') {
             steps {
+                echo 'Running checkout on Master Node'
                 git branch: "${BRANCH}", url: "${GIT_REPO}"
+                stash name: 'source', includes: '**/*'
             }
         }
 
         stage('Terraform Init & Apply') {
             steps {
-                dir('terraform') {
-                    sh '''
-                        terraform init
-                        terraform validate
-                        terraform apply -auto-approve
-                    '''
+                dir('terraform/environments/dev') {
+                    sh 'terraform init && terraform validate && terraform apply -auto-approve'
                 }
             }
         }
@@ -45,7 +47,7 @@ pipeline {
         //     }
         // }
 
-        // stage('Configure Nexus using Ansible') {
+        // stage('Configure Nexus-Agent using Ansible') {
         //     steps {
         //         dir('ansible') {
         //             sh '''
@@ -55,15 +57,35 @@ pipeline {
         //     }
         // }
 
-        stage('Configure Docker using Ansible') {
-            steps {
-                dir('ansible') {
-                    sh '''
-                        ansible-playbook docker.yml
-                    '''
-                }
-            }
-        }
+        // stage('Configure Build-Agent using Ansible') {
+        //     steps {
+        //         dir('ansible') {
+        //             sh '''
+        //                 ansible-playbook builds_agent.yml
+        //             '''
+        //         }
+        //     }
+        // }
+
+        // stage('Configure Docker-Agent using Ansible') {
+        //     steps {
+        //         dir('ansible') {
+        //             sh '''
+        //                 ansible-playbook docker.yml
+        //             '''
+        //         }
+        //     }
+        // }
+
+        // stage('Configure Automation-Host-Agent using Ansible') {
+        //     steps {
+        //         dir('ansible') {
+        //             sh '''
+        //                 ansible-playbook managed_host.yml
+        //             '''
+        //         }
+        //     }
+        // }
 
         // stage('Code Quality') {
         //     steps {
@@ -79,67 +101,59 @@ pipeline {
         // }
 
         stage('Build') {
+            agent { label 'build-agent' }
             steps {
+                echo 'Running build on Build Agent'
+                unstash 'source'
                 sh 'mvn clean package -DskipTests'
+                stash name: 'build-output', includes: '**/*'
             }
         }
 
-        stage('Artifact') {
+        // stage('Artifact') {
+        //     steps {
+        //         nexusArtifactUploader artifacts: [[artifactId: 'Springboot-LibraryManagementSystem', classifier: '', file: 'target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar', type: 'jar']], credentialsId: 'nexus-cred', groupId: 'com.java', nexusUrl: '43.205.255.106:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'springartifact', version: '0.0.1-SNAPSHOT'
+        //     }
+        // }
+
+        stage('Docker Build & Push to ECR') {
+            agent { label 'docker-agent' }
             steps {
-                nexusArtifactUploader artifacts: [[artifactId: 'Springboot-LibraryManagementSystem', classifier: '', file: 'target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar', type: 'jar']], credentialsId: 'nexus-cred', groupId: 'com.java', nexusUrl: '3.110.94.2:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'springartifact', version: '0.0.1-SNAPSHOT'
+                unstash 'build-output'
+                sh '''
+        # Login to ECR
+        aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $ECR_REPO
+
+        # Prepare JAR for Docker
+        cp target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar app.jar
+
+        # Build Docker Image
+        docker build -t myapp:$IMAGE_TAG .
+
+        # Tag Image for ECR
+        docker tag myapp:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+
+        # Push to ECR
+        docker push $ECR_REPO:$IMAGE_TAG
+        '''
             }
         }
 
-        stage('Download JAR from Nexus') {
+        stage('Deploy to EKS using Helm') {
+            agent { label 'automation-host' }
             steps {
-                sshagent(['ansible-ec2-key']) {
-                    sh """
-        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST '
-            mkdir -p $REMOTE_DIR &&
-            wget http://3.110.94.2:8081/repository/springartifact/com/java/Springboot-LibraryManagementSystem/0.0.1-SNAPSHOT/Springboot-LibraryManagementSystem-0.0.1-20250802.180553-2.jar -O /home/ec2-user/docker-build/app.jar
-        '
+                unstash 'source'
+                sh """
+          cd Springboot-LMS-EKS/helm-k8-service/user-service/
+
+          helm upgrade --install user-service . \
+              -f values-efk.yaml \
+              --namespace user-service \
+              --create-namespace \
+              --set image.repository=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO \
+              --set image.tag=$IMAGE_TAG
         """
-                }
-            }
-        }
-
-        stage('Copy Docker Files to Docker-Server') {
-            steps {
-                sshagent(['ansible-ec2-key']) {
-                    sh """
-                    for file in Dockerfile docker-compose.yml .env; do
-                        rsync -avz --ignore-times -e "ssh -o StrictHostKeyChecking=no" \
-                        /var/lib/jenkins/workspace/JenkinsPipeline/\$file \
-                        $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/
-                    done
-                    """
-                }
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sshagent(['ansible-ec2-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "
-                            cd $REMOTE_DIR &&
-                            docker-compose build
-                        "
-                    '''
-                }
-            }
-        }
-
-        stage('Run Docker Compose') {
-            steps {
-                sshagent(['ansible-ec2-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "
-                            cd $REMOTE_DIR &&
-                            docker-compose up -d
-                        "
-                    '''
-                }
             }
         }
     }
