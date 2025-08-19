@@ -5,6 +5,7 @@ pipeline {
         PATH = "$PATH:/opt/maven/apache-maven-3.9.9/bin"
         GIT_REPO = 'https://github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git'
         BRANCH = 'main'
+        AWS_ACCOUNT_ID = '897722672704'
         REMOTE_AUTOMATION_HOST = '43.205.113.157'
         REMOTE_USER = 'ec2-user'
         AWS_REGION = 'ap-south-1'
@@ -115,62 +116,67 @@ pipeline {
         //     }
         // }
 
-        stage('Docker Build & Push to ECR') {
-            agent { label 'docker-agent' }
-            steps {
-                unstash 'build-output'
-                sh '''
-        # Login to ECR
-        aws ecr get-login-password --region $AWS_REGION \
-          | docker login --username AWS --password-stdin $ECR_REPO
-
-        # Prepare JAR for Docker
-        cp target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar app.jar
-
-        # Build Docker Image
-        docker build -t myapp:$IMAGE_TAG .
-
-        # Tag Image for ECR
-        docker tag myapp:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
-
-        # Push to ECR
-        docker push $ECR_REPO:$IMAGE_TAG
-        '''
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            agent { label 'docker-agent' }
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                              usernameVariable: 'DOCKERHUB_USER',
-                                              passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-                        sh """
-                  echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
-                  docker tag myapp:${IMAGE_TAG} ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
-                  docker push ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
-                """
-                                              }
-                }
-            }
-        }
-
-        // stage('Deploy to EKS using Helm') {
-        //     agent { label 'automation-host' }
+        // stage('Docker Build & Push to ECR') {
+        //     agent { label 'docker-agent' }
         //     steps {
-        //         unstash 'source'
-        //         sh """
-        //   cd Springboot-LMS-EKS/helm-k8-service/user-service/
+        //         unstash 'build-output'
+        //         sh '''
+        // # Login to ECR
+        // aws ecr get-login-password --region $AWS_REGION \
+        //   | docker login --username AWS --password-stdin $ECR_REPO
 
-    //   helm upgrade --install user-service . \
-    //       -f values-efk.yaml \
-    //       --namespace user-service \
-    //       --create-namespace \
-    //       --set image.repository=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO \
-    //       --set image.tag=$IMAGE_TAG
-    // """
-    //     }
-    // }
+        // # Prepare JAR for Docker
+        // cp target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar app.jar
+
+        // # Build Docker Image
+        // docker build -t myapp:$IMAGE_TAG .
+
+        // # Tag Image for ECR
+        // docker tag myapp:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+
+        // # Push to ECR
+        // docker push $ECR_REPO:$IMAGE_TAG
+        // '''
+        //     }
+        // }
+
+        // stage('Push to Docker Hub') {
+        //     agent { label 'docker-agent' }
+        //     steps {
+        //         script {
+        //             withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+        //                                       usernameVariable: 'DOCKERHUB_USER',
+        //                                       passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+        //                 sh """
+        //           echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+        //           docker tag myapp:${IMAGE_TAG} ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+        //           docker push ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+        //         """
+        //                                       }
+        //         }
+        //     }
+        // }
+
+        stage('Deploy to EKS using Helm') {
+            agent { label 'automation-host' }
+            steps {
+                unstash 'source'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                          usernameVariable: 'DOCKERHUB_USER',
+                                          passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                    sh """
+              aws eks update-kubeconfig --region ap-south-1 --name my-ec2-eks
+              cd helm-k8-service/user-service/
+
+              helm upgrade --install user-service . \
+                  -f values-efk.yaml \
+                  --namespace user-service \
+                  --create-namespace \
+                  --set image.repository=${DOCKERHUB_USER}/${DOCKERHUB_REPO} \
+                  --set image.tag=${IMAGE_TAG}
+            """
+                                          }
+            }
+        }
     }
 }
