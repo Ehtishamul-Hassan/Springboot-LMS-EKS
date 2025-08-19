@@ -8,9 +8,9 @@ private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]
 
 
 
-enable_rds     = false
-enable_eks     = false
-enable_network = false
+enable_rds     = true
+enable_eks     = true
+enable_network = true
 enable_ec2     = true
 
 instances = {
