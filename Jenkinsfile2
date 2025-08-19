@@ -5,13 +5,12 @@ pipeline {
         PATH = "$PATH:/opt/maven/apache-maven-3.9.9/bin"
         GIT_REPO = 'https://github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git'
         BRANCH = 'main'
-        REMOTE_HOST = '13.201.48.125'
         REMOTE_AUTOMATION_HOST = '43.205.113.157'
         REMOTE_USER = 'ec2-user'
-        REMOTE_DIR  = '/home/ec2-user/docker-build'
         AWS_REGION = 'ap-south-1'
         ECR_REPO = '897722672704.dkr.ecr.ap-south-1.amazonaws.com/springboot-lib-app'
         IMAGE_TAG = 'latest'
+        DOCKERHUB_REPO = 'springboot-lib'
     }
 
     stages {
@@ -140,21 +139,38 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS using Helm') {
-            agent { label 'automation-host' }
+        stage('Push to Docker Hub') {
+            agent { label 'docker-agent' }
             steps {
-                unstash 'source'
-                sh """
-          cd Springboot-LMS-EKS/helm-k8-service/user-service/
-
-          helm upgrade --install user-service . \
-              -f values-efk.yaml \
-              --namespace user-service \
-              --create-namespace \
-              --set image.repository=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO \
-              --set image.tag=$IMAGE_TAG
-        """
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                              usernameVariable: 'DOCKERHUB_USER',
+                                              passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                  echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+                  docker tag myapp:${IMAGE_TAG} ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+                  docker push ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+                """
+                                              }
+                }
             }
         }
+
+        // stage('Deploy to EKS using Helm') {
+        //     agent { label 'automation-host' }
+        //     steps {
+        //         unstash 'source'
+        //         sh """
+        //   cd Springboot-LMS-EKS/helm-k8-service/user-service/
+
+    //   helm upgrade --install user-service . \
+    //       -f values-efk.yaml \
+    //       --namespace user-service \
+    //       --create-namespace \
+    //       --set image.repository=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO \
+    //       --set image.tag=$IMAGE_TAG
+    // """
+    //     }
+    // }
     }
 }

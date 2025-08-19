@@ -60,14 +60,14 @@ instances = {
   #   }
   # }
 
-  # automationHost = {
-  #   az            = "ap-south-1a"
-  #   tag           = "1a"
-  #   name          = "eks-automation-host"
-  #   instance_type = "t2.micro"
-  #   extra_tags = {
-  #     Name        = "automation-host"
-  #     Environment = "dev"
-  #   }
-  # }
+  automationHost = {
+    az            = "ap-south-1a"
+    tag           = "1a"
+    name          = "eks-automation-host"
+    instance_type = "t2.micro"
+    extra_tags = {
+      Name        = "automation-host"
+      Environment = "dev"
+    }
+  }
 }
