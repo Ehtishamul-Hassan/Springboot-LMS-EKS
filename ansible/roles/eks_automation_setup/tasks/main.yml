@@ -19,6 +19,14 @@
     mode: '0440'
     line: '{{ automation_user }} ALL=(ALL) NOPASSWD:ALL'
 
+# 0. Install Java 21 (Amazon Corretto)
+- name: Install Java 21 Amazon Corretto
+  become: true
+  ansible.builtin.dnf:
+    name: java-21-amazon-corretto-devel
+    state: present
+    update_cache: yes
+
 # Install unzip (needed for awscli)
 - name: Ensure unzip is installed
   package:
