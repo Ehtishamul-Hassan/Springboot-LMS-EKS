@@ -1,169 +1,193 @@
-# 📚 Spring Boot Library Management System – CI/CD on AWS with DevOps Tools
-
-This project demonstrates the implementation of a **CI/CD pipeline** for a **Spring Boot** application using top DevOps tools including **Jenkins**, **Ansible**, **Terraform**, **Docker**, **SonarQube**, and **Nexus**, all deployed across multiple **AWS EC2 instances**.
 
 ---
 
-## 🔧 Tools & Technologies Used
+📚 Springboot-LMS-EKS – CI with Jenkins & CD with ArgoCD
 
-| Tool         | Purpose                                 |
-|--------------|------------------------------------------|
-| Spring Boot  | Backend application                     |
-| Jenkins      | CI/CD automation                        |
-| Terraform    | Infrastructure provisioning             |
-| Ansible      | Remote configuration management         |
-| Docker       | Containerization & deployment           |
-| SonarQube    | Code quality analysis                   |
-| Nexus        | Artifact repository                     |
-| AWS EC2      | Cloud hosting infrastructure            |
-| Maven        | Build tool                              |
-| GitHub       | Source code management                  |
-| MobaXterm    | SSH & file transfer GUI                 |
+🚀 Project Overview
+
+This project implements a CI/CD pipeline for a Spring Boot Library Management System deployed on AWS EKS.
+
+CI (Continuous Integration) → Jenkins master-slave architecture
+CD (Continuous Deployment) → ArgoCD (GitOps)
+
+It integrates: Terraform, Ansible, Nexus, SonarQube, Docker, Helm, EFK, Prometheus, Grafana for a complete DevOps ecosystem.
 
 ---
 
-## 🏗️ Project Architecture
+🏗️ Jenkins Master-Slave Setup
 
-```
+🖥 Master Node
 
-```
-                        ┌────────────────────┐
-                        │  My System  │
-                        │ (Code Push to Git) │
-                        └────────┬───────────┘
-                                 │
-                                 ▼
-                    ┌───────────────────────────┐
-                    │    EC2 Instance #1        │
-                    │---------------------------│
-                    │  Jenkins + Ansible + TF   │
-                    │  - Jenkins Pipeline        │
-                    │  - Runs Terraform          │
-                    │  - Triggers Ansible        │
-                    └────────────┬──────────────┘
-                                 │
-     ┌───────────────────────────┼───────────────────────────┐
-     ▼                           ▼                           ▼
-┌─────────────┐         ┌────────────────┐          ┌────────────────┐
-│ EC2 #2      │         │ EC2 #3         │          │ EC2 #4         │
-│ SonarQube   │         │ Nexus Repo     │          │ Docker Host    │
-│ Code Quality│         │ Maven Packages │          │ App Deployment │
-└─────────────┘         └────────────────┘          └────────────────┘
+   Orchestrates CI pipeline
+   Runs Terraform (AWS infra provisioning)
+   Runs Ansible (agent & service configuration)
 
+ 🛠 Build Agent → Builds Spring Boot app with Maven
 
-```
+ 📦 Nexus Agent → Uploads artifacts to Nexus Repository
+
+ 🐳 Docker Agent → Builds & pushes Docker images (ECR & DockerHub)
+
+ 🔍 Sonar Agent → Runs SonarQube analysis
+
+ ☸ Automation Host (EKS Agent) → Handles infra tasks, but final deployment is handled by ArgoCD
 
 ---
 
-## 📂 Project Structure
+ 🔄 CI Pipeline (Jenkins)
 
-```
+1️⃣ Checkout (Master) → Pulls code from GitHub, stashes for agents
+2️⃣ Provision & Configure (Master) → Terraform + Ansible for infra and services
+3️⃣ Code Quality (Sonar Agent) → Static analysis with SonarQube
+4️⃣ Build (Build Agent) → Builds Spring Boot JAR with Maven
+5️⃣ Artifact Upload (Nexus Agent) → Stores JAR in Nexus Repository
+6️⃣ Docker Build & Push (Docker Agent) → Builds Docker image, pushes to ECR & DockerHub
 
-Spring-14-LibraryManagementSystem/
-├── .github/workflows/             # (Optional) GitHub Actions workflows
-├── .mvn/wrapper/                  # Maven wrapper files
-├── .settings/                     # IDE settings
-├── ansible/                       # Configuration mgmt with Ansible
-│   ├── inventory/                 # AWS dynamic inventory
-│   └── roles/                     # Role-based structure for services
+📌 End of CI → The new Docker image tag is committed to Git → ArgoCD picks up for deployment.
+
+---
+
+ 🔄 CD Pipeline (ArgoCD – GitOps)
+
+ Helm charts & manifests are versioned in GitHub
+ ArgoCD watches the repo for changes
+ On update (new image tag), ArgoCD:
+
+   Syncs manifests
+   Deploys app to EKS cluster
+ Benefits:
+
+   Automated, Declarative, Rollback-friendly
+
+---
+
+ 📊 Monitoring & Logging
+
+ EFK Stack (Elasticsearch, Fluentd, Kibana) → Logging
+ Prometheus & Grafana → Metrics & dashboards
+
+---
+
+---
+🖥 Project Architecture
+                ┌───────────────────────────────┐
+                │           Master Node          │
+                │ (Terraform + Ansible + Jenkins)│
+                └──────────────┬────────────────┘
+                               │
+                               │ (Provision Infra + Config Agents)
+                               ▼
+        ┌─────────────────────────────────────────────────────┐
+        │                      AWS Cloud                      │
+        │                                                     │
+        │  ┌───────────────┐      ┌──────────────────────┐    │
+        │  │   EKS Cluster │◄────►│       ArgoCD         │    │
+        │  │ (User-Service │      │ (GitOps Deployment)  │    │
+        │  │  + Monitoring │      └──────────────────────┘    │
+        │  └───────┬───────┘                                  │
+        │          │                                           │
+        │   ┌──────┴───────┐     ┌────────────────────────┐    │
+        │   │   RDS (MySQL)│     │   Elastic Container Reg │    │
+        │   │   Database   │     │ (ECR / DockerHub Images)│    │
+        │   └──────────────┘     └────────────────────────┘    │
+        │                                                     │
+        └─────────────────────────────────────────────────────┘
+
+🔄 CI/CD Pipeline Flow
+
+CI - Jenkins
+
+GitHub → Jenkins → Maven Build → Docker Build → Push to Registry
+
+CD - ArgoCD
+
+ArgoCD watches GitOps repo → detects Helm/K8s changes → deploys to EKS
+
+Infra
+
+Terraform provisions infra
+
+Ansible configures nodes & installs dependencies
+
+---
+
+ ⚙️ Tech Stack
+
+ CI: Jenkins (Master + Agents)
+ CD: ArgoCD (GitOps)
+ Infra: Terraform, Ansible, AWS EKS
+ Code Quality: SonarQube
+ Artifacts: Nexus Repository
+ Containers: Docker, AWS ECR, DockerHub
+ Deployment: Helm, ArgoCD
+ Monitoring: Prometheus, Grafana
+ Logging: EFK Stack
+
+---
+
+ 📂 Repository Structure
+
+```bash
+Springboot-LMS-EKS/
+├── .github/                     # GitHub Actions (optional workflows)
+│   └── workflows/
+├── .mvn/                        # Maven wrapper
+│   └── wrapper/
+├── ansible/                     # Ansible playbooks for configuration
+│   ├── inventory/               # Inventory of hosts
+│   └── roles/                   # Roles for each agent/service
+│       ├── build_agent/
 │       ├── docker/
+│       ├── eks_automation_setup/
 │       ├── jenkins/
 │       ├── nexus/
 │       └── sonarqube/
-├── src/main/java/                 # Application source code
-├── src/main/resources/           # Static files & templates
-├── src/test/java/                # Test classes
-├── target/                        # Maven build output
-├── terraform/                     # IaC scripts
-│   └── modules/
-│       ├── ec2/
-│       └── security\_group/
-├── Dockerfile                     # Docker image for app
-├── docker-compose.yml             # Compose file for multi-container setup
-├── Jenkinsfile                    # Jenkins pipeline script
-├── pom.xml                        # Maven project file
-└── README.md                      # Project documentation
-
-````
-
----
-
-## 🚀 How to Deploy This Project
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Ehtishamul-Hassan/Springboot-LibraryManagementSystem.git
-cd Spring-14-LibraryManagementSystem
-````
-
-### 2. Provision AWS Infrastructure using Terraform
-
-```bash
-cd terraform/
-terraform init
-terraform plan
-terraform apply -auto-approve
+├── helm-k8-service/             # Helm charts for Kubernetes deployment
+│   ├── frontend/
+│   └── user-service/
+├── spare/                       # Backup/extra configs
+├── src/                         # Spring Boot application source code
+│   ├── main/java/com/java/      # App code (controllers, services, repos, etc.)
+│   ├── main/resources/          # Resources (templates, configs)
+│   └── test/java/com/java/      # Unit & integration tests
+├── target/                      # Build output (generated by Maven)
+├── terraform/                   # Terraform IaC
+│   ├── environments/            # Environments (dev, prod)
+│   └── modules/                 # Reusable modules (ec2, eks, network, rds)
+└── Jenkinsfile                  # CI pipeline definition
 ```
 
-### 3. Configure Instances with Ansible
+---
 
-```bash
-cd ansible/
-ansible-playbook -i inventory/aws_ec2.yml docker.yml -u ec2-user --private-key ~/.ssh/ansible_key
-# Repeat for jenkins.yml, sonarqube.yml, nexus.yml if needed
-```
+ 🚦 Workflow
 
-### 4. Set Up Jenkins
+1. Developer Commit → GitHub
+2. CI (Jenkins Master + Agents)
 
-* Open Jenkins on the provisioned EC2.
-* Create a new pipeline using `Jenkinsfile` in the root directory.
-* Add necessary credentials (Sonar, Nexus, SSH key).
+    Terraform + Ansible (infra, config)
+    Code analysis → Build → Artifact → Docker image push
+3. CD (ArgoCD)
 
-### 5. Trigger the Pipeline
+    GitOps syncs Helm manifests to EKS
+4. Observability
 
-* Jenkins will:
-
-  * Checkout code from GitHub
-  * Run code quality checks with SonarQube
-  * Build JAR using Maven
-  * Upload JAR to Nexus
-  * Pull JAR from Nexus on Docker EC2
-  * Build Docker image & deploy container
+    Logs in Kibana
+    Metrics in Grafana
 
 ---
 
-## ✅ Features
+ 📌 Future Enhancements
 
-* Automated code integration, quality scanning, packaging, and deployment
-* Remote provisioning and configuration
-* Modular infrastructure with reusable Terraform and Ansible roles
-* Scalable and cloud-native design using Docker and AWS
-
----
-
-## 📋 Prerequisites
-
-* AWS CLI & IAM credentials
-* SSH Key Pair for EC2 access
-* Jenkins with plugins: Pipeline, Nexus, SonarScanner
-* Docker and Docker Compose on deployment host
-* Nexus and SonarQube up and running
+ ✅ Blue/Green or Canary deployments with ArgoCD
+ ✅ Auto-scaling (HPA) for user-service
+ ✅ Secret management with HashiCorp Vault / AWS SSM
+ ✅ Alerts via Prometheus Alertmanager
 
 ---
 
-## 👤 Author
-
-**Ehtishamul Hassan**
-📧 [hassanarif282@gmail.com]
-🌐 [LinkedIn](www.linkedin.com/in/ehtishamul-hassan-696972276)
+✍️ Author: Ehtishamul Hassan
 
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-```
 
 
 
