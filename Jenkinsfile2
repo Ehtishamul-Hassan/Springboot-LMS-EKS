@@ -5,9 +5,6 @@ pipeline {
         PATH = "$PATH:/opt/maven/apache-maven-3.9.9/bin"
         GIT_REPO = 'https://github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git'
         BRANCH = 'main'
-        AWS_ACCOUNT_ID = '897722672704'
-        REMOTE_AUTOMATION_HOST = '43.205.113.157'
-        REMOTE_USER = 'ec2-user'
         AWS_REGION = 'ap-south-1'
         ECR_REPO = '897722672704.dkr.ecr.ap-south-1.amazonaws.com/springboot-lib-app'
         IMAGE_TAG = 'latest'
@@ -31,74 +28,74 @@ pipeline {
             }
         }
 
-        // stage('Wait for Instances') {
-        //     steps {
-        //         sh 'sleep 30'
-        //     }
-        // }
+        stage('Wait for Instances') {
+            steps {
+                sh 'sleep 30'
+            }
+        }
 
-        // stage('Configure Sonar using Ansible') {
-        //     steps {
-        //         dir('ansible') {
-        //             sh '''
-        //                 ansible-playbook install_sonar.yml
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Configure Sonar using Ansible') {
+            steps {
+                dir('ansible') {
+                    sh '''
+                        ansible-playbook install_sonar.yml
+                    '''
+                }
+            }
+        }
 
-        // stage('Configure Nexus-Agent using Ansible') {
-        //     steps {
-        //         dir('ansible') {
-        //             sh '''
-        //         ansible-playbook install_nexus.yml
-        //     '''
-        //         }
-        //     }
-        // }
+        stage('Configure Nexus-Agent using Ansible') {
+            steps {
+                dir('ansible') {
+                    sh '''
+                ansible-playbook install_nexus.yml
+            '''
+                }
+            }
+        }
 
-        // stage('Configure Build-Agent using Ansible') {
-        //     steps {
-        //         dir('ansible') {
-        //             sh '''
-        //                 ansible-playbook builds_agent.yml
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Configure Build-Agent using Ansible') {
+            steps {
+                dir('ansible') {
+                    sh '''
+                        ansible-playbook builds_agent.yml
+                    '''
+                }
+            }
+        }
 
-        // stage('Configure Docker-Agent using Ansible') {
-        //     steps {
-        //         dir('ansible') {
-        //             sh '''
-        //                 ansible-playbook docker.yml
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Configure Docker-Agent using Ansible') {
+            steps {
+                dir('ansible') {
+                    sh '''
+                        ansible-playbook docker.yml
+                    '''
+                }
+            }
+        }
 
-        // stage('Configure Automation-Host-Agent using Ansible') {
-        //     steps {
-        //         dir('ansible') {
-        //             sh '''
-        //                 ansible-playbook managed_host.yml
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Configure Automation-Host-Agent using Ansible') {
+            steps {
+                dir('ansible') {
+                    sh '''
+                        ansible-playbook managed_host.yml
+                    '''
+                }
+            }
+        }
 
-        // stage('Code Quality') {
-        //     steps {
-        //         withCredentials([string(credentialsId: 'sonar-creds', variable: 'SONAR_TOKEN')]) {
-        //             sh '''
-        //             mvn sonar:sonar \
-        //               -Dsonar.projectKey=springboot_lms \
-        //               -Dsonar.host.url=http://65.2.172.7:9000/ \
-        //               -Dsonar.login=$SONAR_TOKEN
-        //         '''
-        //         }
-        //     }
-        // }
+        stage('Code Quality') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-creds', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                    mvn sonar:sonar \
+                      -Dsonar.projectKey=springboot_lms \
+                      -Dsonar.host.url=http://65.2.172.7:9000/ \
+                      -Dsonar.login=$SONAR_TOKEN
+                '''
+                }
+            }
+        }
 
         stage('Build') {
             agent { label 'build-agent' }
@@ -110,52 +107,52 @@ pipeline {
             }
         }
 
-        // stage('Artifact') {
-        //     steps {
-        //         nexusArtifactUploader artifacts: [[artifactId: 'Springboot-LibraryManagementSystem', classifier: '', file: 'target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar', type: 'jar']], credentialsId: 'nexus-cred', groupId: 'com.java', nexusUrl: '43.205.255.106:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'springartifact', version: '0.0.1-SNAPSHOT'
-        //     }
-        // }
+        stage('Artifact') {
+            steps {
+                nexusArtifactUploader artifacts: [[artifactId: 'Springboot-LibraryManagementSystem', classifier: '', file: 'target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar', type: 'jar']], credentialsId: 'nexus-cred', groupId: 'com.java', nexusUrl: '43.205.255.106:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'springartifact', version: '0.0.1-SNAPSHOT'
+            }
+        }
 
-        // stage('Docker Build & Push to ECR') {
-        //     agent { label 'docker-agent' }
-        //     steps {
-        //         unstash 'build-output'
-        //         sh '''
-        // # Login to ECR
-        // aws ecr get-login-password --region $AWS_REGION \
-        //   | docker login --username AWS --password-stdin $ECR_REPO
+        stage('Docker Build & Push to ECR') {
+            agent { label 'docker-agent' }
+            steps {
+                unstash 'build-output'
+                sh '''
+        # Login to ECR
+        aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $ECR_REPO
 
-        // # Prepare JAR for Docker
-        // cp target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar app.jar
+        # Prepare JAR for Docker
+        cp target/Springboot-LibraryManagementSystem-0.0.1-SNAPSHOT.jar app.jar
 
-        // # Build Docker Image
-        // docker build -t myapp:$IMAGE_TAG .
+        # Build Docker Image
+        docker build -t myapp:$IMAGE_TAG .
 
-        // # Tag Image for ECR
-        // docker tag myapp:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+        # Tag Image for ECR
+        docker tag myapp:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
 
-        // # Push to ECR
-        // docker push $ECR_REPO:$IMAGE_TAG
-        // '''
-        //     }
-        // }
+        # Push to ECR
+        docker push $ECR_REPO:$IMAGE_TAG
+        '''
+            }
+        }
 
-        // stage('Push to Docker Hub') {
-        //     agent { label 'docker-agent' }
-        //     steps {
-        //         script {
-        //             withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-        //                                       usernameVariable: 'DOCKERHUB_USER',
-        //                                       passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-        //                 sh """
-        //           echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
-        //           docker tag myapp:${IMAGE_TAG} ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
-        //           docker push ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
-        //         """
-        //                                       }
-        //         }
-        //     }
-        // }
+        stage('Push to Docker Hub') {
+            agent { label 'docker-agent' }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                              usernameVariable: 'DOCKERHUB_USER',
+                                              passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                  echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+                  docker tag myapp:${IMAGE_TAG} ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+                  docker push ${DOCKERHUB_USER}/${DOCKERHUB_REPO}:${IMAGE_TAG}
+                """
+                                              }
+                }
+            }
+        }
 
         stage('Deploy to EKS using Helm') {
             agent { label 'automation-host' }
@@ -168,12 +165,13 @@ pipeline {
               aws eks update-kubeconfig --region ap-south-1 --name my-ec2-eks
               cd helm-k8-service/user-service/
 
-              helm upgrade --install user-service . \
-                  -f values-efk.yaml \
-                  --namespace user-service \
-                  --create-namespace \
-                  --set image.repository=${DOCKERHUB_USER}/${DOCKERHUB_REPO} \
-                  --set image.tag=${IMAGE_TAG}
+            helm upgrade --install user-service . \
+    -f values-efk.yaml \
+    --namespace user-service \
+    --create-namespace \
+    --set app.image.repository=${DOCKERHUB_USER}/${DOCKERHUB_REPO} \
+    --set app.image.tag=${IMAGE_TAG}
+
             """
                                           }
             }

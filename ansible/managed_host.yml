@@ -1,6 +1,6 @@
 ---
 - name: Install AWS CLI, kubectl, and eksctl
-  hosts: tag_automation-host
+  hosts: tag_automation_host
   become: true
   roles:
     - eks_automation_setup

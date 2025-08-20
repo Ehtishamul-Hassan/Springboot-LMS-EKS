@@ -1,6 +1,6 @@
 ---
 - name: Install Java Maven Git
-  hosts: tag_build-agent
+  hosts: tag_build_agent
   become: true
   roles:
     - build_agent
