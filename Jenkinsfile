@@ -154,6 +154,38 @@ pipeline {
             }
         }
 
+        stage('Update ArgoCD Manifests') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'github-creds', variable: 'GIT_TOKEN')]) {
+                        sh """
+                  git config --global user.email "asif282hassan@gmail.com"
+                  git config --global user.name "Ehtishamul-Hassan"
+                  git config --global --unset credential.helper || true
+
+                  if [ -d "Springboot-LMS-EKS" ]; then
+                      echo "Repo already exists. Resetting and pulling latest..."
+                      cd Springboot-LMS-EKS
+                      git reset --hard
+                      git pull
+                      git remote set-url origin https://git:${GIT_TOKEN}@github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git
+                  else
+                      git clone https://git:${GIT_TOKEN}@github.com/Ehtishamul-Hassan/Springboot-LMS-EKS.git
+                      cd Springboot-LMS-EKS
+                  fi
+
+                  cd helm-k8-service/user-service
+                  sed -i "s|tag:.*|tag: \\"${IMAGE_TAG}\\"|g" values-efk.yaml
+
+                  git add values-efk.yaml
+                  git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes"
+                  git push origin main
+                """
+                    }
+                }
+            }
+        }
+
         stage('Deploy to EKS using Helm') {
             agent { label 'automation-host' }
             steps {
